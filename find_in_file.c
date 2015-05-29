@@ -69,7 +69,10 @@ int main(int argc, char* argv[]) {
 			write(STDOUT_FILENO,no_str,no_str_length);
 			continue;
 		}
-		
+		if(ret_val==-2) {
+		fprintf(stderr,"%s\n",strerror(ENOMEM));
+		exit(EXIT_FAILURE);
+		}
 	}
 	exit(EXIT_SUCCESS);
 }
