@@ -10,6 +10,9 @@ static int suffix_length(const char* pattern, int pattern_length, int p);
 static inline int max(int a, int b) {
 	return (a>b)?a:b;
 }
+static inline int min(int a, int b) {
+	return (a<b)?a:b;
+}
 
 int findBM(const char* text,const char* pattern, int text_length, int pattern_length)
 {
@@ -17,6 +20,11 @@ int findBM(const char* text,const char* pattern, int text_length, int pattern_le
 	int* table_gs;
 	int pos=-1;
 	int index_bc;
+	int index_gs;
+	int u;
+	int v;
+	int shift;
+	int turbo_shift;
 
 	if(pattern_length==0)
 		return 0;
@@ -36,6 +44,9 @@ int findBM(const char* text,const char* pattern, int text_length, int pattern_le
 	 pre_bm_bc(pattern,pattern_length,table_bc,ASIZE);
 	 pre_bm_gs(pattern,pattern_length,table_gs);
 
+	u=0;
+	shift=pattern_length;
+
 	for(int i=pattern_length-1; (i<text_length)&&(pos<0);) {
 		int j = pattern_length - 1;
 		while (pattern[j]==text[i]) {
@@ -44,14 +55,28 @@ int findBM(const char* text,const char* pattern, int text_length, int pattern_le
 				break;
 			}
 			j--;
-			i--;	
+			i--;
+			if( u != 0 && j == pattern_length - shift - 1 )
+				j -= u;
 		}
 		if(text[i]<AOFFSET) {
 		 	i+=pattern_length-j;
 			continue;
 		}
+		v = pattern_length - j - 1;
+		turbo_shift = u - v;
 		index_bc=text[i]-AOFFSET;
-		i+=max(table_gs[pattern_length-1-j], table_bc[index_bc]);
+		index_gs=pattern_length-1-j;
+		shift= max(turbo_shift,table_bc[index_bc]);
+		shift= max(shift,table_gs[index_gs]);
+		if(shift == table_gs[index_gs])
+			u = min( (pattern_length-shift), v);
+		else { 
+			if ( turbo_shift < table_bc[index_bc])
+				shift = max (shift, (u+1)); 
+			u=0;
+		}
+		i+=shift;		
 	}
 	free(table_bc);
 	free(table_gs);	
